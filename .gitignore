@@ -1,0 +1,11 @@
+PolarDecoder.cache/
+PolarDecoder.hw/
+PolarDecoder.runs/
+PolarDecoder.sim/
+*.jou
+*.log
+*.dcp
+*.wcfg
+/.lint/
+/.Xil
+/.Xilinx
