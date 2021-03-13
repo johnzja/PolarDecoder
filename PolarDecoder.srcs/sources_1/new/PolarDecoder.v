@@ -163,6 +163,7 @@ module PolarDecoder
     reg [n-1:0] psr_onehot = 0;
     reg [LLR_WIDTH-1:0] input_LLRs[N-1:0];
     
+    // Generator block for f functions and g functions applied on channel input LLRs.
     generate
         localparam t_out = 2**(n-1) - 1;    // 3
         localparam t_out_len = 2**(n-1);    // 4
@@ -172,8 +173,9 @@ module PolarDecoder
         end
     endgenerate
     
-    reg [N-1:0] frozen_bits;
-    reg t;
+    
+    reg [N-1:0] frozen_bits;    // Register of length N, indicating which bits are forced to zero.
+    reg t;                      
     integer k;
     
     always@(posedge clk) begin
@@ -221,6 +223,7 @@ module PolarDecoder
                     end
                 end
                 
+                // DECIDE state: perform hard decision given the calculated LLR stored in P[0].
                 DECIDE: begin
                     if(frozen_bits[phi]) begin
                         if(!phi[0]) begin
@@ -241,7 +244,7 @@ module PolarDecoder
                         end
                     end
                     
-                    // Decision complete. Then setup partial-sum return.
+                    // Decision complete. Then setup partial-sum return logic.
                     if(phi == N-1) begin
                         state <= COMPLETE;
                     end else if(phi[0]) begin
