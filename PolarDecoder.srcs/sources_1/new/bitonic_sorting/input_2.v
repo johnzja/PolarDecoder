@@ -9,7 +9,7 @@
 // 
 ///////////////////////////////////////////
 
-`timescale 1ns / 1ps
+`timescale 1ns / 1ns
 module input_2 #
 (
     parameter DATA_WIDTH = 8,

@@ -84,10 +84,12 @@ module sim_top(
         endcase
     end
     
-    PolarDecoder #(.LLR_WIDTH(LLR_WIDTH)) pd(.clk(clk), .reset(reset), .input_ready(input_ready), .output_ready(output_ready), .decoded_bits(decoded_bits), .LLR(LLR_RECV[counter]));
+    SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(3), .l(2), .K(4)) 
+            scl_decoder(.clk(clk), .reset(reset), .input_ready(input_ready), .output_ready(output_ready), .decoded_bits(decoded_bits), .LLR(LLR_RECV[counter]));
     
     /* Simulate The bitonic sorting network */
     // Test an N = 8 bitonic sorting network.
+    /*
     localparam DATA_WIDTH=3;
     localparam LABEL_WIDTH = 3;
     localparam LOG_INPUT_NUM = 3;
@@ -127,7 +129,7 @@ module sim_top(
     bitonic_sorting_top #(.LOG_INPUT_NUM(LOG_INPUT_NUM), .DATA_WIDTH(DATA_WIDTH), .LABEL_WIDTH(LABEL_WIDTH), .SIGNED(0), .ASCENDING(1)) 
         bs_inst(.clk(clk), .rst(reset), .x_valid(x_valid), 
     .x(x_input), .x_label(l_input), .y(x_output), .y_label(l_output)); 
-    
+    */
     
     
 endmodule
