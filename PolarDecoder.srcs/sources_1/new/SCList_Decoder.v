@@ -54,7 +54,7 @@ module SCList_Decoder
     wire [LLR_WIDTH-1:0] P_next_F [L-1:0][N-2:0];
     wire [LLR_WIDTH-1:0] P_next_G [L-1:0][N-2:0];
     wire [LLR_WIDTH-1:0] P_next_Bus [N-2:0];
-    reg [L-1:0] Copy_EN;            // Copy from P_next_Copy, CL_next_Copy and CR_next_Copy iff Cply_EN[list] = 1.
+    reg [L-1:0] Copy_EN;                        // Copy from P_next_Copy, CL_next_Copy and CR_next_Copy iff Cply_EN[list] = 1.
     
     generate
         for(list=0;list<L;list=list+1) begin:FG_List
@@ -149,6 +149,7 @@ module SCList_Decoder
     localparam PREP_SORT    = 4'h8;
     localparam WAIT_SORT    = 4'h9;
     localparam COPY_PATH    = 4'hA;
+    localparam IDENT_PATH   = 4'hB;
     
     reg [n-1:0] counter = 0;
     reg [n-1:0] llr_layer = 0;
@@ -176,10 +177,12 @@ module SCList_Decoder
     reg [PM_WIDTH-1:0] PM[L-1:0];            // Path measures.
     reg [PM_WIDTH-1:0] PM_split_0[L-1:0];    // Splitted path measures, MSB indicating the bit choice.
     reg [PM_WIDTH-1:0] PM_split_1[L-1:0];    // Splitted path measures, MSB indicating the bit choice.
-    
+    reg [L-1:0] active_path;
+
     reg [K-1:0] u [L-1:0];
     wire [K-1:0] u_next_Bus;
-    reg [l-1:0] list_iter;
+    reg [l-1:0] list_iter;                  // This iteration pointer is only used in 'for' loops.
+    reg [l-1:0] list_iter_fsm;              // This iteration pointer is used in FSM loops.
     
     // Using the bitonic sorting network.
     reg sort_start = 0;
@@ -192,17 +195,24 @@ module SCList_Decoder
     wire [(l+1)*(2*L)-1:0] l_output;
     
     wire [PM_WIDTH-1:0] PM_split_sorted[2*L-1:0];
-    wire [l:0] PM_split_sorted_label[2*L-1:0];
-    
+    wire [l:0] PM_split_sorted_label[2*L-1:0];   
+
+    reg [L-1:0] Flag_SC_state;
+    reg [L-1:0] Flag_Copy_state;
+    reg [L-1:0] Flag_Killed_state;   
+    reg [L-1:0] Flag_Path_decision;
+
+    reg [L-1:0] temp;
+
     generate 
         for(i=0;i<L;i=i+1) begin: connnect_sort_x_0
             assign x_input[(i+1)*PM_WIDTH-1:i*PM_WIDTH] = PM_split_0[i];
-            assign l_input[(i+1)*(l+1)-1:i*(l+1)] = {1'b0, i[l-1:0]};
+            assign l_input[(i+1)*(l+1)-1:i*(l+1)] = {1'b0, i[l-1:0]};       // Fixed label inputs.
             
         end
         
         for(i=L;i<(2*L);i=i+1) begin: connect_sort_x_1
-            assign x_input[(i+1)*PM_WIDTH-1:i*PM_WIDTH] = PM_split_1[i];
+            assign x_input[(i+1)*PM_WIDTH-1:i*PM_WIDTH] = PM_split_1[i-L];
             assign l_input[(i+1)*(l+1)-1:i*(l+1)] = {1'b1, i[l-1:0]};
         end
         
@@ -233,6 +243,8 @@ module SCList_Decoder
             decoded_bits <= 0;
             for(k=0;k<K;k=k+1) u[k] <= 0;   // Initialize u-paths to be zero.
             for(k=0;k<L;k=k+1) PM[k] <= 0;
+            active_path <= 1;               // Enable only one path at the beginning.
+
         end
         else begin
             // Main FSM logic starts here.
@@ -258,6 +270,7 @@ module SCList_Decoder
                     state <= LEFT;
                 end
                 
+                // Left-propagation.
                 LEFT: begin
                     P_wr_en <= P_wr_en >> 1;
                     P_wr_from_F <= P_wr_en >> 1;
@@ -293,14 +306,19 @@ module SCList_Decoder
                         
                         // Setup PM_split_0 and PM_split_1 in parallel.
                         for(list_iter=0;list_iter<L;list_iter=list_iter+1) begin
-                            if(P[list_iter][0][LLR_WIDTH-1]) begin
-                                // negative sign.
-                                PM_split_0[list_iter] <= PM[list_iter] + ((~P[list_iter][0])+1);
-                                PM_split_1[list_iter] <= PM[list_iter];
+                            if(active_path[list_iter]) begin
+                                if(P[list_iter][0][LLR_WIDTH-1]) begin
+                                    // negative sign.
+                                    PM_split_0[list_iter] <= PM[list_iter] + ((~P[list_iter][0])+1);
+                                    PM_split_1[list_iter] <= PM[list_iter];
+                                end else begin
+                                    // positive sign.
+                                    PM_split_1[list_iter] <= PM[list_iter] + P[list_iter][0];
+                                    PM_split_0[list_iter] <= PM[list_iter];
+                                end
                             end else begin
-                                // positive sign.
-                                PM_split_1[list_iter] <= PM[list_iter] + P[list_iter][0];
-                                PM_split_0[list_iter] <= PM[list_iter];
+                                PM_split_0[list_iter] <= -1;    // All-one path metric (MAX).
+                                PM_split_1[list_iter] <= -1;    // All-one path metric (MAX).
                             end
                         end
                         
@@ -317,9 +335,37 @@ module SCList_Decoder
                     if(sort_complete) begin
                         // TODO: Find out the survivor paths and extend them at CL or CR.
                         // TODO: Copy paths if necessary.
+                        state <= IDENT_PATH;
+                        list_iter_fsm <= 0;
+                        Flag_SC_state <= 0;
+                        Flag_Killed_state <= -1;    // All 1's.
+                        Flag_Copy_state <= 0;
+                        Flag_Path_decision <= 0;
                     end
                 end
                 
+                IDENT_PATH: begin
+                    if(list_iter_fsm == L-1) begin
+                        state <= COPY_PATH;
+                        list_iter_fsm <= 0;
+                    end
+
+                    temp = PM_split_sorted_label[list_iter_fsm][l-1:0];    // bit length: l, it is the path index.
+                    if(Flag_Killed_state[temp]) begin
+                        Flag_Killed_state[temp] <= 1'b0;
+                        Flag_SC_state[temp]     <= 1'b1;
+                    end else if(Flag_SC_state[temp]) begin
+                        Flag_SC_state[temp]     <= 1'b0;
+                        Flag_Copy_state[temp]   <= 1'b1;
+                    end
+
+                    list_iter_fsm <= list_iter_fsm + 1;
+                end
+
+                COPY_PATH: begin
+                    // Use the path identification information to decide how to copy paths.
+                    
+                end
                 
                 DECIDE: begin
                     // Decision complete. Then setup partial-sum return logic.
