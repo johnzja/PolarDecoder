@@ -131,6 +131,8 @@ module SCList_Decoder
                     end
                 end
             end
+
+            // Update CL[0] is included in the FSM logic, not HERE.
         end
     endgenerate
     
@@ -178,7 +180,7 @@ module SCList_Decoder
     reg [PM_WIDTH-1:0] PM_split_0[L-1:0];    // Splitted path measures, MSB indicating the bit choice.
     reg [PM_WIDTH-1:0] PM_split_1[L-1:0];    // Splitted path measures, MSB indicating the bit choice.
     reg [L-1:0] active_path;
-    reg [l:0]   N_active_path;
+    reg [l+1:0]   N_active_path;
 
     reg [K-1:0] u [L-1:0];
     wire [K-1:0] u_next_Bus;
@@ -210,7 +212,7 @@ module SCList_Decoder
     reg [l:0] N_Killed_state;               // #. Paths in killed state.
     reg [l-1:0] ptr_Copy_state [L-1:0];     // Path index for each path in copy state.
     reg [l-1:0] ptr_Killed_state [L-1:0];   // Path index for each path in killed state.
-    
+    reg [L-1:0] just_copied;                // Bit indicators. 1'b1 means this path is a new path which had just inherited data from another path.
     
     generate 
         for(i=0;i<L;i=i+1) begin: connnect_sort_x_0
@@ -230,7 +232,7 @@ module SCList_Decoder
         end
     endgenerate
     
-    bitonic_sorting_top #(.LOG_INPUT_NUM(l+1), .DATA_WIDTH(PM_WIDTH), .LABEL_WIDTH(l+1), .SIGNED(0), .ASCENDING(0)) 
+    bitonic_sorting_top #(.LOG_INPUT_NUM(l+1), .DATA_WIDTH(PM_WIDTH), .LABEL_WIDTH(l+1), .SIGNED(0), .ASCENDING(1)) 
         bs_inst(.clk(clk), .rst(reset), .x_valid(sort_start), 
     .x(x_input), .x_label(l_input), .y(x_output), .y_label(l_output), .y_valid(sort_complete)); 
     
@@ -306,41 +308,35 @@ module SCList_Decoder
                 // PREP_SORT state: Perform path-splitting.
                 PREP_SORT: begin
                     if(frozen_bits[phi]) begin
-                        if(!phi[0]) begin
-                            for(k=0;k<L;k=k+1) CL[k][0] = 1'b0;
-                        end else begin
-                            for(k=0;k<L;k=k+1) CR[k][0] = 1'b0;
-                        end
                         state <= DECIDE;
-                    end
-                    else begin
-                        // Setup PM_split_0 and PM_split_1 in parallel.
-                        for(list_iter=0;list_iter<L;list_iter=list_iter+1) begin
-                            if(active_path[list_iter]) begin
-                                if(P[list_iter][0][LLR_WIDTH-1]) begin
-                                    // negative sign.
-                                    PM_split_0[list_iter] <= PM[list_iter] + ((~P[list_iter][0])+1);
-                                    PM_split_1[list_iter] <= PM[list_iter];
-                                end else begin
-                                    // positive sign.
-                                    PM_split_1[list_iter] <= PM[list_iter] + P[list_iter][0];
-                                    PM_split_0[list_iter] <= PM[list_iter];
-                                end
-                            end else begin
-                                PM_split_0[list_iter] <= -1;    // All-one path metric (MAX), infinity.
-                                PM_split_1[list_iter] <= -1;    // All-one path metric (MAX), infinity.
-                            end
-                        end
-                        
+                    end else begin
                         // Enable the bitonic sorting network.
+
                         sort_start <= 1'b1;
                         N_active_path = N_active_path << 1;        
                         if(N_active_path > L) N_active_path = L;
-
                         state <= WAIT_SORT; 
                     end
+                    
+                    // Setup PM_split_0 and PM_split_1 in parallel, within 1 clock cycle.
+                    for(list_iter=0;list_iter<L;list_iter=list_iter+1) begin
+                        if(active_path[list_iter]) begin
+                            if(P[list_iter][0][LLR_WIDTH-1]) begin
+                                // negative sign.
+                                PM_split_0[list_iter] <= PM[list_iter] + {{n {1'b0}}, -P[list_iter][0]};
+                                PM_split_1[list_iter] <= PM[list_iter];
+                            end else begin
+                                // positive sign.
+                                PM_split_1[list_iter] <= PM[list_iter] + {{n {1'b0}}, P[list_iter][0]};
+                                PM_split_0[list_iter] <= PM[list_iter];
+                            end
+                        end else begin
+                            PM_split_0[list_iter] <= -1;    // All-one path metric (MAX), infinity.
+                            PM_split_1[list_iter] <= -1;    // All-one path metric (MAX), infinity.
+                        end
+                    end
                     Flag_Path_decision <= 0;
-
+                    just_copied <= 0;
                 end
                 
                 WAIT_SORT: begin
@@ -378,8 +374,10 @@ module SCList_Decoder
                         end else if(Flag_SC_state[temp]) begin
                             Flag_SC_state[temp]     <= 1'b0;
                             Flag_Copy_state[temp]   <= 1'b1;
-                            N_Copy_state <= N_Copy_state + 1;
                             ptr_Copy_state[N_Copy_state] <= temp;               // ptr_Copy_state[i] means the index of the i-th path which needs to be copied.
+
+                            N_Copy_state = N_Copy_state + 1;
+                            Flag_Path_decision[temp] <= 1'b0;                   // if a path is in copy state, then the original path should be extended by 1'b0.
                         end
 
                     end else begin
@@ -396,8 +394,13 @@ module SCList_Decoder
                         list_iter_fsm <= list_iter_fsm + 1;
                     else begin
                         list_iter_fsm <= 0;
-                        state <= COPY_PATH;
+                        if(N_Copy_state != 0)
+                            state <= COPY_PATH;
+                        else
+                            state <= DECIDE;
+                        
                         reg_copy_selector <= 0;
+                        just_copied <= 0;
                     end
                 end
 
@@ -407,36 +410,49 @@ module SCList_Decoder
                     reg_copy_selector = ptr_Copy_state[list_iter_fsm];
                     temp = ptr_Killed_state[list_iter_fsm];
 
-                    Copy_EN = 0;
-                    Copy_EN[temp] = 1'b1;               // Enable path[temp] to be written.
+                    Copy_EN = 0;                        
+                    Copy_EN[temp] = 1'b1;                       
+                    CL[temp][0] <= CL[reg_copy_selector][0];        // Enable CL path[temp] to be written.
+
                     Flag_Path_decision[temp] = 1'b1;    
                     active_path[temp] <= 1'b1;
+                    just_copied[temp] <= 1'b1;
+                    PM[temp] <= PM_split_1[reg_copy_selector];      // Access reg PM here.
+
                     u[temp] <= u[reg_copy_selector];
                     
                     list_iter_fsm = list_iter_fsm + 1;
-                    if(list_iter_fsm == N_Copy_state) state <= DECIDE;
+                    if(list_iter_fsm == N_Copy_state) begin
+                        state <= DECIDE;
+                    end
                 end
                 
                 DECIDE: begin
+                    Copy_EN <= 0;
                     for(k=0;k<L;k=k+1) begin
                         if(active_path[k]) begin
-                            u[k][u_iter] = Flag_Path_decision[k];
-                            
+                            if(!frozen_bits[phi])
+                                u[k][u_iter] = Flag_Path_decision[k];
+                                
                             if(!phi[0]) begin
                                 CL[k][0] = Flag_Path_decision[k];
                             end else begin
                                 CR[k][0] = Flag_Path_decision[k];
                             end
                             
-                            if(Flag_Path_decision[k]) begin
-                                PM[k] <= PM_split_1[k];
-                            end else begin
-                                PM[k] <= PM_split_0[k];
+                            // Update path measures.
+                            if(!just_copied[k]) begin
+                                if(Flag_Path_decision[k]) begin
+                                    PM[k] <= PM_split_1[k];
+                                end else begin
+                                    PM[k] <= PM_split_0[k];
+                                end
                             end
                         end
                     end
                     
-                    u_iter <= u_iter + 1;
+                    if(!frozen_bits[phi])   u_iter <= u_iter + 1;
+
                     // Decision complete. Then setup partial-sum return logic.
                     if(phi == N-1) begin
                         state <= COMPLETE;
@@ -495,6 +511,7 @@ module SCList_Decoder
                 end
                 
                 COMPLETE: begin
+                    // TODO: Find the path with least PM.
                     output_ready <= 1;
                     state <= INIT;
                 end
