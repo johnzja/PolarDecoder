@@ -45,9 +45,9 @@ module sim_top(
         LLR_RECV[2] <= 8'b1111_1000;
         LLR_RECV[3] <= 8'b0000_0010;
         LLR_RECV[4] <= 8'b1111_0011;
-        LLR_RECV[5] <= 8'b1111_0100;
+        LLR_RECV[5] <= 8'b0000_1100;
         LLR_RECV[6] <= 8'b0010_0001;
-        LLR_RECV[7] <= 8'b1111_1001;
+        LLR_RECV[7] <= 8'b0000_0111;
     end
     
     reg [3:0] FSM_state;

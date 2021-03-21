@@ -152,6 +152,7 @@ module SCList_Decoder
     localparam WAIT_SORT    = 4'h9;
     localparam COPY_PATH    = 4'hA;
     localparam IDENT_PATH   = 4'hB;
+    localparam WAIT_FIND    = 4'hC;
     
     reg [n-1:0] counter = 0;
     reg [n-1:0] llr_layer = 0;
@@ -190,6 +191,11 @@ module SCList_Decoder
     // Using the bitonic sorting network.
     reg sort_start = 0;
     wire sort_complete;
+
+    // Using the find_min module.
+    reg find_min_start = 0;
+    wire find_min_complete;
+    wire [l-1:0] ptr_min_PM;
     
     // Setup x_input, l_input, x_output and l_output.
     wire [PM_WIDTH*(2*L)-1:0] x_input;
@@ -260,6 +266,7 @@ module SCList_Decoder
             Copy_EN <= 0;
             
             sort_start <= 0;
+            find_min_start <= 0;
             
             frozen_bits <= 8'b00010111;     // A = { 4, 6, 7, 8 }.
             
@@ -342,8 +349,6 @@ module SCList_Decoder
                 WAIT_SORT: begin
                     sort_start <= 1'b0;
                     if(sort_complete) begin
-                        // TODO: Find out the survivor paths and extend them at CL or CR.
-                        // TODO: Copy paths if necessary.
                         state <= IDENT_PATH;
                         list_iter_fsm <= 0;
                         Flag_SC_state <= 0;
@@ -455,7 +460,8 @@ module SCList_Decoder
 
                     // Decision complete. Then setup partial-sum return logic.
                     if(phi == N-1) begin
-                        state <= COMPLETE;
+                        state <= WAIT_FIND;
+                        find_min_start <= 1'b1;
                     end else if(phi[0]) begin
                         psr_onehot <= 2;    // initialize the switch as [0 1 0 0 ... ], enabling CL[1] or CR[1] to be accessed.
                         state <= RIGHT;
@@ -509,11 +515,19 @@ module SCList_Decoder
                     
                     state <= LEFT;
                 end
+
+                WAIT_FIND: begin
+                    find_min_start <= 1'b0;
+                    if(find_min_complete) begin
+                        decoded_bits <= u[ptr_min_PM];
+                        state <= COMPLETE;
+                    end
+                end
                 
                 COMPLETE: begin
                     // TODO: Find the path with least PM.
-                    output_ready <= 1;
                     state <= INIT;
+                    output_ready <= 1;
                 end
                 
                 default: begin
@@ -523,6 +537,20 @@ module SCList_Decoder
         end
     end
     
-    
+
+    // Post-decoding sorting logic.
+    // calling find_min modules when in complete state.
+    wire [PM_WIDTH*L-1:0] fm_input_data;
+    wire [l*L-1:0] fm_input_labels;
+
+    generate
+        for(i=0;i<L;i=i+1) begin: connect_find_min
+            assign fm_input_data[PM_WIDTH*(i+1)-1:PM_WIDTH*i] = PM[i];
+            assign fm_input_labels[l*(i+1)-1:l*i] = i[l-1:0];           // Binary representation of i, in l=log2(L) bits.
+        end
+    endgenerate
+
+    find_min #(.DATA_WIDTH(PM_WIDTH), .LABEL_WIDTH(l), .LOG_INPUT_NUM(l)) find_min_inst(.clk(clk), 
+                .input_data(fm_input_data), .input_labels(fm_input_labels), .input_ready(find_min_start), .output_label(ptr_min_PM), .output_ready(find_min_complete));
     
 endmodule

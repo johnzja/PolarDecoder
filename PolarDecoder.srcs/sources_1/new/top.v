@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company:     Tsinghua University
+// Engineer:    John Zhu
 // 
 // Create Date: 2021/02/21 14:17:33
-// Design Name: 
+// Design Name: SCList Polar Decoder
 // Module Name: top
 // Project Name: 
 // Target Devices: 
@@ -32,14 +32,14 @@ module top(
     reg [LLR_WIDTH-1:0] LLR_RECV[7:0];
     
     initial begin
-        LLR_RECV[0] <= 8'h01;
-        LLR_RECV[1] <= 8'h01;
-        LLR_RECV[2] <= 8'hff;
-        LLR_RECV[3] <= 8'hff;
-        LLR_RECV[4] <= 8'hff;
-        LLR_RECV[5] <= 8'hff;
-        LLR_RECV[6] <= 8'h01;
-        LLR_RECV[7] <= 8'h01;
+        LLR_RECV[0] <= 8'b1111_1100;    // -2.0 * 2
+        LLR_RECV[1] <= 8'b1111_1011;    // -2.5 * 2
+        LLR_RECV[2] <= 8'b1111_1000;    // -4.0 * 2
+        LLR_RECV[3] <= 8'b0000_0010;    // 1.0  * 2
+        LLR_RECV[4] <= 8'b1111_0011;    // -6.5 * 2
+        LLR_RECV[5] <= 8'b0000_1100;    // 6.0  * 2
+        LLR_RECV[6] <= 8'b0010_0001;    // 16.6 * 2
+        LLR_RECV[7] <= 8'b0000_0111;    // 3.5  * 2
     end
     
     reg [3:0] FSM_state;
@@ -80,6 +80,6 @@ module top(
         endcase
     end
     
-    PolarDecoder #(.LLR_WIDTH(LLR_WIDTH)) pd(.clk(clk), .reset(reset), .input_ready(input_ready), .output_ready(output_ready), .decoded_bits(decoded_bits), .LLR(LLR_RECV[counter]));
+    SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(3), .l(2), .K(4)) pd(.clk(clk), .reset(reset), .input_ready(input_ready), .output_ready(output_ready), .decoded_bits(decoded_bits), .LLR(LLR_RECV[counter]));
     
 endmodule
