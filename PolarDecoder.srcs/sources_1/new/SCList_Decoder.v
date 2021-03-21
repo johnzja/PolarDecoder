@@ -207,7 +207,6 @@ module SCList_Decoder
     wire [l:0] PM_split_sorted_label[2*L-1:0];   
 
     reg [L-1:0] Flag_SC_state;
-    reg [L-1:0] Flag_Copy_state;
     reg [L-1:0] Flag_Killed_state;  
     reg [L-1:0] Flag_Killed_state_dual;
     reg [L-1:0] Flag_Path_decision;
@@ -355,8 +354,6 @@ module SCList_Decoder
                         Flag_Killed_state <= -1;        // All 1's.
                         Flag_Killed_state_dual <= 0;    //
 
-                        Flag_Copy_state <= 0;
-
                         N_Copy_state <= 0;          
                         N_Killed_state <= 0;
 
@@ -378,7 +375,6 @@ module SCList_Decoder
                             Flag_Path_decision[temp] <= PM_split_sorted_label[list_iter_fsm][l];    // if a path is in SC state, then the SC hard-decision bit should be saved.
                         end else if(Flag_SC_state[temp]) begin
                             Flag_SC_state[temp]     <= 1'b0;
-                            Flag_Copy_state[temp]   <= 1'b1;
                             ptr_Copy_state[N_Copy_state] <= temp;               // ptr_Copy_state[i] means the index of the i-th path which needs to be copied.
 
                             N_Copy_state = N_Copy_state + 1;
