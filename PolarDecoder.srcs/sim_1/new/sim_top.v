@@ -37,17 +37,28 @@ module sim_top(
     wire [3:0] decoded_bits;
     
     parameter LLR_WIDTH = 8;
-    reg [LLR_WIDTH-1:0] LLR_RECV[7:0];
+    reg [8*(LLR_WIDTH)-1:0] LLR_RECV;
     
+    integer k;
     initial begin
-        LLR_RECV[0] <= 8'b1111_1100;
-        LLR_RECV[1] <= 8'b1111_1011;
-        LLR_RECV[2] <= 8'b1111_1000;
-        LLR_RECV[3] <= 8'b0000_0010;
-        LLR_RECV[4] <= 8'b1111_0011;
-        LLR_RECV[5] <= 8'b0000_1100;
-        LLR_RECV[6] <= 8'b0010_0001;
-        LLR_RECV[7] <= 8'b0000_0111;
+    /*
+        LLR_RECV[7:0]   <= 8'b1111_1100;    // -2.0 * 2
+        LLR_RECV[15:8]  <= 8'b1111_1011;    // -2.5 * 2
+        LLR_RECV[23:16] <= 8'b1111_1000;    // -4.0 * 2
+        LLR_RECV[31:24] <= 8'b0000_0010;    // 1.0  * 2
+        LLR_RECV[39:32] <= 8'b1111_0011;    // -6.5 * 2
+        LLR_RECV[47:40] <= 8'b0000_1100;    // 6.0  * 2
+        LLR_RECV[55:48] <= 8'b0010_0001;    // 16.6 * 2
+        LLR_RECV[63:56] <= 8'b0000_0111;    // 3.5  * 2
+        */
+        LLR_RECV[7:0]   <= 8'd29;    // -2.0 * 2
+        LLR_RECV[15:8]  <= 8'd245;    // -2.5 * 2
+        LLR_RECV[23:16] <= 8'd242;    // -4.0 * 2
+        LLR_RECV[31:24] <= 8'd33;    // 1.0  * 2
+        LLR_RECV[39:32] <= 8'd29;    // -6.5 * 2
+        LLR_RECV[47:40] <= 8'd241;    // 6.0  * 2
+        LLR_RECV[55:48] <= 8'd230;    // 16.6 * 2
+        LLR_RECV[63:56] <= 8'd10;    // 3.5  * 2
     end
     
     reg [3:0] FSM_state;
@@ -63,7 +74,6 @@ module sim_top(
         case(FSM_state)
             4'h0: begin
                 FSM_state <= 4'h1;
-                counter <= 0;
                 input_ready <= 1;
             end
             
@@ -73,19 +83,13 @@ module sim_top(
             end
             
             4'h2: begin
-                counter <= counter + 1;
-                if(counter == 7) FSM_state <= 4'h3;
+                FSM_state <= 4'h2;      // Absorption state.
             end
-            
-            4'h3: begin
-                FSM_state <= 4'h3;
-            end
-        
         endcase
     end
     
     SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(3), .l(2), .K(4)) 
-            scl_decoder(.clk(clk), .reset(reset), .input_ready(input_ready), .output_ready(output_ready), .decoded_bits(decoded_bits), .LLR(LLR_RECV[counter]));
+            scl_decoder(.clk(clk), .reset(reset), .input_ready(input_ready), .output_ready(output_ready), .decoded_bits(decoded_bits), .LLR(LLR_RECV));
     
     /* Simulate The bitonic sorting network */
     // Test an N = 8 bitonic sorting network.

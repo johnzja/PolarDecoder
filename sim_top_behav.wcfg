@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="587220fs"></ZoomStartTime>
-      <ZoomEndTime time="1259721fs"></ZoomEndTime>
-      <Cursor1Time time="1195000fs"></Cursor1Time>
+      <ZoomStartTime time="783204fs"></ZoomStartTime>
+      <ZoomEndTime time="1137705fs"></ZoomEndTime>
+      <Cursor1Time time="905000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="200"></NameColumnWidth>
-      <ValueColumnWidth column_width="126"></ValueColumnWidth>
+      <ValueColumnWidth column_width="122"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="61" />
+   <WVObjectSize size="60" />
    <wvobject fp_name="/sim_top/reset" type="logic">
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
@@ -35,10 +35,11 @@
    <wvobject fp_name="/sim_top/decoded_bits" type="array">
       <obj_property name="ElementShortName">decoded_bits[3:0]</obj_property>
       <obj_property name="ObjectShortName">decoded_bits[3:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="/sim_top/LLR_RECV" type="array">
-      <obj_property name="ElementShortName">LLR_RECV[7:0][7:0]</obj_property>
-      <obj_property name="ObjectShortName">LLR_RECV[7:0][7:0]</obj_property>
+      <obj_property name="ElementShortName">LLR_RECV[63:0]</obj_property>
+      <obj_property name="ObjectShortName">LLR_RECV[63:0]</obj_property>
       <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/sim_top/FSM_state" type="array">
@@ -69,16 +70,63 @@
       <obj_property name="ElementShortName">P[3:0][6:0][7:0]</obj_property>
       <obj_property name="ObjectShortName">P[3:0][6:0][7:0]</obj_property>
       <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject fp_name="/sim_top/scl_decoder/P[3]" type="array">
+         <obj_property name="ElementShortName">[3][6:0][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[3][6:0][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_top/scl_decoder/P[2]" type="array">
+         <obj_property name="ElementShortName">[2][6:0][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[2][6:0][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_top/scl_decoder/P[1]" type="array">
+         <obj_property name="ElementShortName">[1][6:0][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[1][6:0][7:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/sim_top/scl_decoder/P[0]" type="array">
+         <obj_property name="ElementShortName">[0][6:0][7:0]</obj_property>
+         <obj_property name="ObjectShortName">[0][6:0][7:0]</obj_property>
+         <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject fp_name="/sim_top/scl_decoder/P[0][6]" type="array">
+            <obj_property name="ElementShortName">[6][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[6][7:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/sim_top/scl_decoder/P[0][5]" type="array">
+            <obj_property name="ElementShortName">[5][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[5][7:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/sim_top/scl_decoder/P[0][4]" type="array">
+            <obj_property name="ElementShortName">[4][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[4][7:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/sim_top/scl_decoder/P[0][3]" type="array">
+            <obj_property name="ElementShortName">[3][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[3][7:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/sim_top/scl_decoder/P[0][2]" type="array">
+            <obj_property name="ElementShortName">[2][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[2][7:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/sim_top/scl_decoder/P[0][1]" type="array">
+            <obj_property name="ElementShortName">[1][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[1][7:0]</obj_property>
+         </wvobject>
+         <wvobject fp_name="/sim_top/scl_decoder/P[0][0]" type="array">
+            <obj_property name="ElementShortName">[0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[0][7:0]</obj_property>
+            <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+         </wvobject>
+      </wvobject>
    </wvobject>
    <wvobject fp_name="/sim_top/scl_decoder/CL" type="array">
       <obj_property name="ElementShortName">CL[3:0][6:0]</obj_property>
       <obj_property name="ObjectShortName">CL[3:0][6:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="/sim_top/scl_decoder/CR" type="array">
       <obj_property name="ElementShortName">CR[3:0][6:0]</obj_property>
       <obj_property name="ObjectShortName">CR[3:0][6:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="/sim_top/scl_decoder/P_next_F" type="array">
       <obj_property name="ElementShortName">P_next_F[3:0][6:0][7:0]</obj_property>
@@ -169,7 +217,6 @@
    <wvobject fp_name="/sim_top/scl_decoder/PM_split_sorted" type="array">
       <obj_property name="ElementShortName">PM_split_sorted[7:0][10:0]</obj_property>
       <obj_property name="ObjectShortName">PM_split_sorted[7:0][10:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="/sim_top/scl_decoder/PM_split_sorted_label" type="array">
       <obj_property name="ElementShortName">PM_split_sorted_label[7:0][2:0]</obj_property>
@@ -178,10 +225,6 @@
    <wvobject fp_name="/sim_top/scl_decoder/Flag_SC_state" type="array">
       <obj_property name="ElementShortName">Flag_SC_state[3:0]</obj_property>
       <obj_property name="ObjectShortName">Flag_SC_state[3:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/sim_top/scl_decoder/Flag_Copy_state" type="array">
-      <obj_property name="ElementShortName">Flag_Copy_state[3:0]</obj_property>
-      <obj_property name="ObjectShortName">Flag_Copy_state[3:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/sim_top/scl_decoder/Flag_Killed_state" type="array">
       <obj_property name="ElementShortName">Flag_Killed_state[3:0]</obj_property>
@@ -259,6 +302,7 @@
    <wvobject fp_name="/sim_top/scl_decoder/input_LLRs" type="array">
       <obj_property name="ElementShortName">input_LLRs[7:0][7:0]</obj_property>
       <obj_property name="ObjectShortName">input_LLRs[7:0][7:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/sim_top/scl_decoder/frozen_bits" type="array">
       <obj_property name="ElementShortName">frozen_bits[7:0]</obj_property>

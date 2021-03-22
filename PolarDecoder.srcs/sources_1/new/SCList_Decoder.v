@@ -26,7 +26,7 @@ module SCList_Decoder
     input wire clk,
     input wire reset,
     input wire input_ready,
-    input wire [LLR_WIDTH-1:0] LLR,
+    input wire [((2**n)*(LLR_WIDTH))-1:0] LLR,
     
     output reg output_ready,
     output reg [3:0] decoded_bits
@@ -253,45 +253,52 @@ module SCList_Decoder
             assign P_next_Bus[i] = P[reg_copy_selector][i];
         end
     endgenerate
-
-    always@(posedge clk) begin
+    
+    // input LLR assignments.
+    wire [LLR_WIDTH-1:0] input_LLRs_formatted[N-1:0];
+    generate
+        for(i=0;i<N;i=i+1) begin: format_input_LLRs
+            assign input_LLRs_formatted[i] = LLR[(i+1)*LLR_WIDTH-1 : i*LLR_WIDTH];
+        end
+    endgenerate
+    
+    always@(posedge clk or posedge reset) begin
         if(reset) begin
-            phi <= 0;
             state <= INIT;
-            counter <= 0;
-            
-            P_wr_en <= 0;
-            P_wr_from_F <= 0;
-            Copy_EN <= 0;
-            
-            sort_start <= 0;
-            find_min_start <= 0;
-            
-            frozen_bits <= 8'b00010111;     // A = { 4, 6, 7, 8 }.
-            
             decoded_bits <= 0;
             for(k=0;k<K;k=k+1) u[k] <= 0;   // Initialize u-paths to be zero.
-            for(k=0;k<L;k=k+1) PM[k] <= 0;
-
-            active_path <= 1;               // Enable only one path at the beginning.
-            N_active_path <= 1;             // At the beginning: There are only 1 active path.
-            u_iter <= 0;
         end
         else begin
             // Main FSM logic starts here.
             case(state)
                 INIT: begin
+                    output_ready <= 0;
+                    phi <= 0;
+
+                    P_wr_en <= 0;
+                    P_wr_from_F <= 0;
+                    Copy_EN <= 0;
+
+                    sort_start <= 0;
+                    find_min_start <= 0;
+
+                    frozen_bits <= 8'b00010111;     // A = { 4, 6, 7, 8 }.
+
+                    active_path <= 1;               // Enable only one path at the beginning.
+                    N_active_path <= 1;             // At the beginning: There are only 1 active path.
+                    u_iter <= 0;                    
+
+                    for(k=0;k<L;k=k+1) PM[k] <= 0;
+
                     if(input_ready) begin
-                        output_ready <= 0;
                         state <= READ_DATA;
                         counter <= 0;
                     end
                 end
                 
                 READ_DATA: begin
-                    input_LLRs[counter] <= LLR;
-                    counter <= counter + 1;
-                    if(counter == (N-1)) state <= CH_F_EXEC;
+                    for(k=0;k<N;k=k+1) input_LLRs[k] <= input_LLRs_formatted[k];
+                    state <= CH_F_EXEC;
                 end
                 
                 CH_F_EXEC: begin
