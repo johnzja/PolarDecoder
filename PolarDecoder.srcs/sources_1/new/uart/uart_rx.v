@@ -13,7 +13,7 @@
 // (10000000)/(115200) = 87
 //CLKS_PER_BIT = 10417: BAUD RATE=9600
 module uart_rx 
-  #(parameter CLKS_PER_BIT = 1736)
+  #(parameter CLKS_PER_BIT = 868)
   (
    input        i_Clock,         
    input        i_Rx_Serial,

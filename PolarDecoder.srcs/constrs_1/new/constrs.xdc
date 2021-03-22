@@ -8,6 +8,10 @@ set_property -dict {PACKAGE_PIN K3 IOSTANDARD LVCMOS33}     [get_ports decoded_b
 set_property -dict {PACKAGE_PIN M1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[1]]
 set_property -dict {PACKAGE_PIN L1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[2]]
 set_property -dict {PACKAGE_PIN K6 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[3]]
+set_property -dict {PACKAGE_PIN J5 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[4]]
+set_property -dict {PACKAGE_PIN H5 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[5]]
+set_property -dict {PACKAGE_PIN H6 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[6]]
+set_property -dict {PACKAGE_PIN K1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[7]]
 
 # UART Tx and Rx.
 set_property -dict {PACKAGE_PIN N5 IOSTANDARD LVCMOS33} [get_ports {Rx_Serial}]

@@ -35,7 +35,7 @@ module F
     assign abs_LLR_2 = (LLR_2[MSB]) ? ((~LLR_2) + 1) : LLR_2;
       
     wire [MSB:0] abs_LLR_pred;
-    assign abs_LLR_pred = (abs_LLR_1 < abs_LLR_2) ? abs_LLR_1 : abs_LLR_2;
+    assign abs_LLR_pred = ((abs_LLR_1 < abs_LLR_2) ? abs_LLR_1 : abs_LLR_2);
     assign LLR_pred_U1 = (output_sign) ? ((~abs_LLR_pred) + 1) : abs_LLR_pred;
 endmodule
 

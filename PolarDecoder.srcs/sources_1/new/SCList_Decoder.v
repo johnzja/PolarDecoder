@@ -19,9 +19,8 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
 module SCList_Decoder
-    #(parameter LLR_WIDTH = 8, parameter n = 3, parameter l = 3, parameter K = 4)
+    #(parameter LLR_WIDTH = 8, parameter n = 3, parameter l = 3, parameter K = 4, parameter FROZEN_BITS=8'b00010111)
     (
     input wire clk,
     input wire reset,
@@ -29,7 +28,7 @@ module SCList_Decoder
     input wire [((2**n)*(LLR_WIDTH))-1:0] LLR,
     
     output reg output_ready,
-    output reg [3:0] decoded_bits
+    output reg [K-1:0] decoded_bits
     );
     
     
@@ -282,7 +281,7 @@ module SCList_Decoder
                     sort_start <= 0;
                     find_min_start <= 0;
 
-                    frozen_bits <= 8'b00010111;     // A = { 4, 6, 7, 8 }.
+                    frozen_bits <= FROZEN_BITS;
 
                     active_path <= 1;               // Enable only one path at the beginning.
                     N_active_path <= 1;             // At the beginning: There are only 1 active path.
