@@ -4,14 +4,14 @@ create_clock -period 10.000 -name CLK -waveform {0.000 3.300} [get_ports clk]
 
 # decoded bits.
 set_property -dict {PACKAGE_PIN R15 IOSTANDARD LVCMOS33}    [get_ports {reset}]
-set_property -dict {PACKAGE_PIN K3 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[0]]
-set_property -dict {PACKAGE_PIN M1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[1]]
-set_property -dict {PACKAGE_PIN L1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[2]]
-set_property -dict {PACKAGE_PIN K6 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[3]]
-set_property -dict {PACKAGE_PIN J5 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[4]]
-set_property -dict {PACKAGE_PIN H5 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[5]]
-set_property -dict {PACKAGE_PIN H6 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[6]]
-set_property -dict {PACKAGE_PIN K1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits[7]]
+set_property -dict {PACKAGE_PIN K3 IOSTANDARD LVCMOS33}     [get_ports decoded_bits_disp[0]]
+set_property -dict {PACKAGE_PIN M1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits_disp[1]]
+set_property -dict {PACKAGE_PIN L1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits_disp[2]]
+set_property -dict {PACKAGE_PIN K6 IOSTANDARD LVCMOS33}     [get_ports decoded_bits_disp[3]]
+set_property -dict {PACKAGE_PIN J5 IOSTANDARD LVCMOS33}     [get_ports decoded_bits_disp[4]]
+set_property -dict {PACKAGE_PIN H5 IOSTANDARD LVCMOS33}     [get_ports decoded_bits_disp[5]]
+set_property -dict {PACKAGE_PIN H6 IOSTANDARD LVCMOS33}     [get_ports decoded_bits_disp[6]]
+set_property -dict {PACKAGE_PIN K1 IOSTANDARD LVCMOS33}     [get_ports decoded_bits_disp[7]]
 
 # UART Tx and Rx.
 set_property -dict {PACKAGE_PIN N5 IOSTANDARD LVCMOS33} [get_ports {Rx_Serial}]

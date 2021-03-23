@@ -23,7 +23,7 @@
 module top(
     input wire clk,
     input wire reset,
-    output wire [7:0] decoded_bits,
+    output wire [7:0] decoded_bits_disp,
     input wire Rx_Serial,
     output wire Tx_Serial,
 
@@ -36,15 +36,18 @@ module top(
 
     reg input_ready; wire output_ready;
     
-    parameter LLR_WIDTH = 11;            // Additional bits = 3.
+    parameter ADDITIONAL_WIDTH = 3;
     
-    parameter n = 4;
+    parameter n = 5;
     parameter N = 2**n;
-    parameter M = 8;
+    parameter M = 16;
     parameter l = 3;
+    parameter LLR_WIDTH = 8 + ADDITIONAL_WIDTH;
 
     reg [LLR_WIDTH-1:0] LLR_RECV [N-1:0];
-    
+    wire [M-1:0] decoded_bits;
+    assign decoded_bits_disp = decoded_bits[7:0];
+
     integer k;
     // initial begin
     //     LLR_RECV[0] <= 11'b0001111_1100;    // -2.0 * 2
@@ -119,7 +122,7 @@ module top(
                 RecvData: begin
                     if(Rx_DataValid) begin
                         UART_RecvCnt = UART_RecvCnt + 1;
-                        LLR_RECV[UART_RecvCnt] <= {{3{Rx_Data[7]}}, Rx_Data};   // Sign-extension.
+                        LLR_RECV[UART_RecvCnt] <= {{ADDITIONAL_WIDTH{Rx_Data[7]}}, Rx_Data};    // Sign-extension.
                         //LLR_RECV[UART_RecvCnt] <= Rx_Data;      // Sign-extension.
 
                         if(UART_RecvCnt == N-1) begin
@@ -141,9 +144,12 @@ module top(
     assign D = LLR_RECV[SW];      // Debug Port.
 
     reg [3:0] UART_Tx_FSM_state;
-    reg [3:0] decoded_bits_to_transmit;
-    reg [7:0] decoded_byte_to_transmit;
+    reg [M-1:0] decoded_bits_to_transmit;
+    localparam M_bytes = M/8;
 
+    reg [4:0] TransmitCnt;
+
+    // Transmit FSM.
     localparam TransmitData     = 4'h1;
     localparam WaitTransmit     = 4'h2;
 
@@ -152,28 +158,34 @@ module top(
             UART_Tx_FSM_state <= 0;
         end else case(UART_Tx_FSM_state)
             INIT: begin
+                TransmitCnt = 0;
                 if(output_ready) begin
                     // decoded_byte_to_transmit <= {4'b0000, decoded_bits};
-                    decoded_byte_to_transmit <= decoded_bits;
+                    // decoded_byte_to_transmit <= decoded_bits;
+                    decoded_bits_to_transmit <= decoded_bits;       // Save data to be transmitted.
                     UART_Tx_FSM_state <= TransmitData;
                 end
             end
 
             TransmitData: begin
                 Tx_DataValid <= 1'b1;
-                Tx_Data <= decoded_byte_to_transmit;
+                Tx_Data = decoded_bits_to_transmit[7:0];
+                decoded_bits_to_transmit = decoded_bits_to_transmit >> 8;
                 UART_Tx_FSM_state <= WaitTransmit;
             end
 
             WaitTransmit: begin
                 Tx_DataValid <= 1'b0;
                 if(Tx_Done) begin
-                    UART_Tx_FSM_state <= INIT;
+                    TransmitCnt = TransmitCnt + 1;
+                    if(TransmitCnt == M_bytes)
+                        UART_Tx_FSM_state <= INIT;
+                    else
+                        UART_Tx_FSM_state <= TransmitData;
                 end
             end
         endcase
     end
-    
 
     /*
     always@(posedge clk) begin
@@ -207,7 +219,7 @@ module top(
     */
 
     // Include the SCL decoder.
-    SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(n), .l(l), .K(M), .FROZEN_BITS(16'b0000000101111111)) 
+    SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(n), .l(l), .K(M), .FROZEN_BITS(32'b00000000000101110001011111111111)) 
                                                                             scl_decoder(.clk(clk), .reset(manual_reset), 
                                                                             .input_ready(input_ready), .output_ready(output_ready), 
                                                                             .decoded_bits(decoded_bits), .LLR(LLR_recv_bitstr));
