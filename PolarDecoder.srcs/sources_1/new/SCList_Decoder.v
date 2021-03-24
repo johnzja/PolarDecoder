@@ -20,7 +20,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module SCList_Decoder
-    #(parameter LLR_WIDTH = 8, parameter n = 3, parameter l = 3, parameter K = 4, parameter FROZEN_BITS=8'b00010111)
+    #(  parameter LLR_WIDTH = 8, parameter n = 3, parameter l = 3, parameter K = 4, parameter FROZEN_BITS=8'b00010111,
+        parameter CRC_poly = 4'b0011, parameter N_CRC = 4
+    )
     (
     input wire clk,
     input wire reset,
@@ -80,13 +82,8 @@ module SCList_Decoder
                 
                 for(j=0;j<t_out_len;j=j+1) begin: P_update_logic_inner
                     always@(posedge clk) begin
-                        if(reset) begin
-                            P[list][t_out+j] <= 0;     
-                        end
-                        else begin
-                            if(Copy_EN[list]) P[list][t_out+j] <= P_next_Bus[t_out+j];
-                            else if(P_wr_en[i]) P[list][t_out+j] <= (P_wr_from_F[i])?P_next_F[list][t_out+j]:P_next_G[list][t_out+j];
-                        end
+                        if(Copy_EN[list]) P[list][t_out+j] <= P_next_Bus[t_out+j];
+                        else if(P_wr_en[i]) P[list][t_out+j] <= (P_wr_from_F[i])?P_next_F[list][t_out+j]:P_next_G[list][t_out+j];
                     end
                 end
             end
@@ -105,27 +102,19 @@ module SCList_Decoder
                 
                 for(j=0;j<t_out_len;j=j+1) begin: C_update_logic_inner
                     always@(posedge clk) begin
-                        if(reset) begin
-                            CL[list][t1+j] <= 0;
-                            CR[list][t1+j] <= 0;
-                            CL[list][t2+j] <= 0;
-                            CR[list][t2+j] <= 0;
-                        end 
-                        else begin
-                            if(CR_wr_en[i+1]) begin
-                                CR[list][t1+j] <= CR[list][t_out+j] ^ CL[list][t_out+j];  // Partial-sum return.
-                                CR[list][t2+j] <= CR[list][t_out+j];
-                            end
+                        if(CR_wr_en[i+1]) begin
+                            CR[list][t1+j] <= CR[list][t_out+j] ^ CL[list][t_out+j];  // Partial-sum return.
+                            CR[list][t2+j] <= CR[list][t_out+j];
+                        end
                             
-                            // Update CL.
-                            if(Copy_EN[list]) begin
-                                CL[list][t1+j] <= CL_next_Bus[t1+j];
-                                CL[list][t2+j] <= CL_next_Bus[t2+j];
-                            end
-                            else if(CL_wr_en[i+1]) begin
-                                CL[list][t1+j] <= CR[list][t_out+j] ^ CL[list][t_out+j];  // Partial-sum return.
-                                CL[list][t2+j] <= CR[list][t_out+j];
-                            end
+                        // Update CL.
+                        if(Copy_EN[list]) begin
+                            CL[list][t1+j] <= CL_next_Bus[t1+j];
+                            CL[list][t2+j] <= CL_next_Bus[t2+j];
+                        end
+                        else if(CL_wr_en[i+1]) begin
+                            CL[list][t1+j] <= CR[list][t_out+j] ^ CL[list][t_out+j];  // Partial-sum return.
+                            CL[list][t2+j] <= CR[list][t_out+j];
                         end
                     end
                 end
@@ -152,6 +141,7 @@ module SCList_Decoder
     localparam COPY_PATH    = 4'hA;
     localparam IDENT_PATH   = 4'hB;
     localparam WAIT_FIND    = 4'hC;
+    localparam CHECK_CRC    = 4'hD;
     
     reg [n-1:0] counter = 0;
     reg [n-1:0] llr_layer = 0;
@@ -183,8 +173,12 @@ module SCList_Decoder
     reg [l+1:0]   N_active_path;
 
     reg [K-1:0] u [L-1:0];
+    reg [N_CRC-1:0] CRC_u[L-1:0];           // CRC bits of u. Calculated whenever one info bit is decoded.
+    wire [l-1:0] CRC_zero_selector;
+
     wire [K-1:0] u_next_Bus;
-    reg [l:0] list_iter;                  // This iteration pointer is only used in 'for' loops.
+
+    reg [l:0] list_iter;                    // This iteration pointer is only used in 'for' loops.
     reg [l:0] list_iter_fsm;                // This iteration pointer is used in FSM loops.
     
     // Using the bitonic sorting network.
@@ -287,7 +281,10 @@ module SCList_Decoder
                     N_active_path <= 1;             // At the beginning: There are only 1 active path.
                     u_iter <= 0;                    
 
-                    for(k=0;k<L;k=k+1) PM[k] <= 0;
+                    for(k=0;k<L;k=k+1) begin
+                        PM[k] <= 0;
+                        CRC_u[k] <= 0;
+                    end
 
                     if(input_ready) begin
                         state <= READ_DATA;
@@ -427,6 +424,7 @@ module SCList_Decoder
                     PM[temp] <= PM_split_1[reg_copy_selector];      // Access reg PM here.
 
                     u[temp] <= u[reg_copy_selector];
+                    CRC_u[temp] <= CRC_u[reg_copy_selector];
                     
                     list_iter_fsm = list_iter_fsm + 1;
                     if(list_iter_fsm == N_Copy_state) begin
@@ -440,7 +438,13 @@ module SCList_Decoder
                         if(active_path[k]) begin
                             if(!frozen_bits[phi])
                                 u[k][u_iter] = Flag_Path_decision[k];
-                                
+                                // Perform CRC check.
+                                if(CRC_u[k][N_CRC-1]) begin
+                                    CRC_u[k] <= CRC_poly ^ {CRC_u[k][N_CRC-2:0], Flag_Path_decision[k]};
+                                end else begin
+                                    CRC_u[k] <= {CRC_u[k][N_CRC-2:0], Flag_Path_decision[k]};
+                                end
+
                             if(!phi[0]) begin
                                 CL[k][0] = Flag_Path_decision[k];
                             end else begin
@@ -462,8 +466,8 @@ module SCList_Decoder
 
                     // Decision complete. Then setup partial-sum return logic.
                     if(phi == N-1) begin
-                        state <= WAIT_FIND;
-                        find_min_start <= 1'b1;
+                        state <= CHECK_CRC;
+                        
                     end else if(phi[0]) begin
                         psr_onehot <= 2;    // initialize the switch as [0 1 0 0 ... ], enabling CL[1] or CR[1] to be accessed.
                         state <= RIGHT;
@@ -518,6 +522,18 @@ module SCList_Decoder
                     state <= LEFT;
                 end
 
+                CHECK_CRC: begin
+                    for(k=0;k<L;k=k+1) begin
+                        if(CRC_u[k] == 0) begin
+                            decoded_bits = u[k];       // Problems may be HERE.
+                            state = COMPLETE;
+                        end else begin
+                            state = WAIT_FIND;
+                            find_min_start = 1'b1;
+                        end
+                    end
+                end
+
                 WAIT_FIND: begin
                     find_min_start <= 1'b0;
                     if(find_min_complete) begin
@@ -539,9 +555,8 @@ module SCList_Decoder
         end
     end
     
-
     // Post-decoding sorting logic.
-    // calling find_min modules when in complete state.
+    // Calling find_min modules when in complete state.
     wire [PM_WIDTH*L-1:0] fm_input_data;
     wire [l*L-1:0] fm_input_labels;
 
@@ -555,4 +570,10 @@ module SCList_Decoder
     find_min #(.DATA_WIDTH(PM_WIDTH), .LABEL_WIDTH(l), .LOG_INPUT_NUM(l)) find_min_inst(.clk(clk), 
                 .input_data(fm_input_data), .input_labels(fm_input_labels), .input_ready(find_min_start), .output_label(ptr_min_PM), .output_ready(find_min_complete));
     
+    // CRC Logic. Need to convert "find_min" into "bitonic_sorting_network", in order to aid the CRC-check logic.
+    always@(*) begin
+        for(k=0;k<L;k=k+1) begin
+            
+        end
+    end
 endmodule
