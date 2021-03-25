@@ -34,23 +34,64 @@ module sim_top(
         #10 reset = 0;
     end
     reg input_ready; wire output_ready;
-    wire [3:0] decoded_bits;
+    
     
     parameter LLR_WIDTH = 8;
-    reg [8*(LLR_WIDTH)-1:0] LLR_RECV;
+    parameter INNER_LLR_WIDTH = LLR_WIDTH + 3;
+    
+    localparam M = 16;
+    localparam K_CRC = 4;
+    localparam K = M+K_CRC;
+    localparam n = 5;
+    localparam N = 2**n;
+    
+    wire [K-1:0] decoded_bits;
+    wire [N*(INNER_LLR_WIDTH)-1:0] LLR_RECV;
+    reg [LLR_WIDTH-1:0] LLR_RECV_formatted[N-1:0];
+    
+    genvar i;
+    generate
+        for(i=0;i<N;i=i+1) begin: LLR_recv_formatter
+            assign LLR_RECV[(i+1)*INNER_LLR_WIDTH-1:i*INNER_LLR_WIDTH] = {{(INNER_LLR_WIDTH-LLR_WIDTH){LLR_RECV_formatted[i][LLR_WIDTH-1]}}, LLR_RECV_formatted[i]};
+        end
+    endgenerate
+    
     
     integer k;
     initial begin
-    /*
-        LLR_RECV[7:0]   <= 8'b1111_1100;    // -2.0 * 2
-        LLR_RECV[15:8]  <= 8'b1111_1011;    // -2.5 * 2
-        LLR_RECV[23:16] <= 8'b1111_1000;    // -4.0 * 2
-        LLR_RECV[31:24] <= 8'b0000_0010;    // 1.0  * 2
-        LLR_RECV[39:32] <= 8'b1111_0011;    // -6.5 * 2
-        LLR_RECV[47:40] <= 8'b0000_1100;    // 6.0  * 2
-        LLR_RECV[55:48] <= 8'b0010_0001;    // 16.6 * 2
-        LLR_RECV[63:56] <= 8'b0000_0111;    // 3.5  * 2
-        */
+        LLR_RECV_formatted[0]       <= 8'd10;
+        LLR_RECV_formatted[1]       <= 8'd0;
+        LLR_RECV_formatted[2]       <= 8'd255;
+        LLR_RECV_formatted[3]       <= 8'd22;
+        LLR_RECV_formatted[4]       <= 8'd16;
+        LLR_RECV_formatted[5]       <= 8'd236;
+        LLR_RECV_formatted[6]       <= 8'd17;
+        LLR_RECV_formatted[7]       <= 8'd23;
+        LLR_RECV_formatted[8]       <= 8'd248;
+        LLR_RECV_formatted[9]       <= 8'd253;
+        LLR_RECV_formatted[10]      <= 8'd17;
+        LLR_RECV_formatted[11]      <= 8'd243;
+        LLR_RECV_formatted[12]      <= 8'd13;
+        LLR_RECV_formatted[13]      <= 8'd5;
+        LLR_RECV_formatted[14]      <= 8'd18;
+        LLR_RECV_formatted[15]      <= 8'd3;
+        LLR_RECV_formatted[16]      <= 8'd3;
+        LLR_RECV_formatted[17]      <= 8'd5;
+        LLR_RECV_formatted[18]      <= 8'd245;
+        LLR_RECV_formatted[19]      <= 8'd22;
+        LLR_RECV_formatted[20]      <= 8'd247;
+        LLR_RECV_formatted[21]      <= 8'd239;
+        LLR_RECV_formatted[22]      <= 8'd21;
+        LLR_RECV_formatted[23]      <= 8'd232;
+        LLR_RECV_formatted[24]      <= 8'd10;
+        LLR_RECV_formatted[25]      <= 8'd243;
+        LLR_RECV_formatted[26]      <= 8'd14;
+        LLR_RECV_formatted[27]      <= 8'd14;
+        LLR_RECV_formatted[28]      <= 8'd5;
+        LLR_RECV_formatted[29]      <= 8'd245;
+        LLR_RECV_formatted[30]      <= 8'd244;
+        LLR_RECV_formatted[31]      <= 8'd16;
+        /*
         LLR_RECV[7:0]   <= 8'd29;    // -2.0 * 2
         LLR_RECV[15:8]  <= 8'd245;    // -2.5 * 2
         LLR_RECV[23:16] <= 8'd242;    // -4.0 * 2
@@ -59,6 +100,7 @@ module sim_top(
         LLR_RECV[47:40] <= 8'd241;    // 6.0  * 2
         LLR_RECV[55:48] <= 8'd230;    // 16.6 * 2
         LLR_RECV[63:56] <= 8'd10;    // 3.5  * 2
+        */
     end
     
     reg [3:0] FSM_state;
@@ -88,7 +130,7 @@ module sim_top(
         endcase
     end
     
-    SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(3), .l(2), .K(4)) 
+    SCList_Decoder #(.LLR_WIDTH(INNER_LLR_WIDTH), .n(n), .l(3), .K(K), .FROZEN_BITS(32'b00000000000000110000011101111111)) 
             scl_decoder(.clk(clk), .reset(reset), .input_ready(input_ready), .output_ready(output_ready), .decoded_bits(decoded_bits), .LLR(LLR_RECV));
     
     /* Simulate The bitonic sorting network */

@@ -40,15 +40,38 @@ module F
 endmodule
 
 module G
-    #(parameter LLR_WIDTH = 5)
+    #(parameter LLR_WIDTH = 5, parameter USE_SATURATION = 0)
     (
         input wire [LLR_WIDTH-1:0] LLR_1, 
         input wire [LLR_WIDTH-1:0] LLR_2,
         input wire U1,
         output wire [LLR_WIDTH-1:0] LLR_pred_U2
     );
-    
-    assign LLR_pred_U2 = (U1) ? (LLR_2 - LLR_1) : (LLR_2 + LLR_1);
+    wire [LLR_WIDTH-1:0] LLR_pred_U2_temp;
+    wire [LLR_WIDTH-1:0] sum;
+    wire [LLR_WIDTH-1:0] diff;
+
+    assign sum = LLR_1 + LLR_2;
+    assign diff = LLR_2 - LLR_1;
+
+    if(USE_SATURATION) begin
+        assign LLR_pred_U2_temp = (U1) ? (diff) : (sum);
+        
+        wire OVF_up_add, OVF_down_add;
+        wire OVF_up_sub, OVF_down_sub;
+
+        assign OVF_up_add = !LLR_1[LLR_WIDTH-1] && !LLR_2[LLR_WIDTH-1] && sum[LLR_WIDTH-1];
+        assign OVF_down_add = LLR_1[LLR_WIDTH-1] && LLR_2[LLR_WIDTH-1] && !sum[LLR_WIDTH-1];
+
+        assign OVF_up_sub = LLR_1[LLR_WIDTH-1] && !LLR_2[LLR_WIDTH-1] && sum[LLR_WIDTH-1];
+        assign OVF_down_sub = !LLR_1[LLR_WIDTH-1] && LLR_2[LLR_WIDTH-1] && !sum[LLR_WIDTH-1];
+
+        assign LLR_pred_U2 = (OVF_up_add || OVF_up_sub) ? {1'b0, {(LLR_WIDTH-1){1'b1}}} :
+                            (OVF_down_add || OVF_down_sub) ? {1'b1, {(LLR_WIDTH-1){1'b0}}}:
+                            LLR_pred_U2_temp;
+    end else begin
+        assign LLR_pred_U2 = (U1) ? diff : sum;
+    end
 endmodule
 
 module PolarDecoder

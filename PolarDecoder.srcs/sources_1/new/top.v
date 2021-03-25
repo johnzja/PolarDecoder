@@ -36,31 +36,22 @@ module top(
 
     reg input_ready; wire output_ready;
     
-    parameter ADDITIONAL_WIDTH = 3;
-    
     parameter n = 5;
-    parameter N = 2**n;
+    localparam N = 2**n;
     parameter M = 16;
+    parameter K_CRC = 4;
+    localparam K = M + K_CRC;       // Total cnt. of non-frozen bits.
+
     parameter l = 3;
-    parameter LLR_WIDTH = 8 + ADDITIONAL_WIDTH;
+    parameter ADDITIONAL_WIDTH = 3;
+    localparam LLR_WIDTH = 8 + ADDITIONAL_WIDTH;
 
     reg [LLR_WIDTH-1:0] LLR_RECV [N-1:0];
-    wire [M-1:0] decoded_bits;
+    wire [K-1:0] decoded_bits;
     assign decoded_bits_disp = decoded_bits[7:0];
 
-    integer k;
-    // initial begin
-    //     LLR_RECV[0] <= 11'b0001111_1100;    // -2.0 * 2
-    //     LLR_RECV[1] <= 11'b0001111_1011;    // -2.5 * 2
-    //     LLR_RECV[2] <= 11'b0001111_1000;    // -4.0 * 2
-    //     LLR_RECV[3] <= 11'b0000000_0010;    // 1.0  * 2
-    //     LLR_RECV[4] <= 11'b0001111_0011;    // -6.5 * 2
-    //     LLR_RECV[5] <= 11'b0000000_1100;    // 6.0  * 2
-    //     LLR_RECV[6] <= 11'b0000010_0001;    // 16.6 * 2
-    //     LLR_RECV[7] <= 11'b0000000_0111;    // 3.5  * 2
-    // end
-    
     wire [N*LLR_WIDTH-1:0] LLR_recv_bitstr;
+    integer k;
     genvar i;
     generate
         for(i=0;i<N;i=i+1) begin: gen_LLR_recv_bitstr
@@ -160,9 +151,7 @@ module top(
             INIT: begin
                 TransmitCnt = 0;
                 if(output_ready) begin
-                    // decoded_byte_to_transmit <= {4'b0000, decoded_bits};
-                    // decoded_byte_to_transmit <= decoded_bits;
-                    decoded_bits_to_transmit <= decoded_bits;       // Save data to be transmitted.
+                    decoded_bits_to_transmit <= decoded_bits[M-1:0];       // Save data to be transmitted.
                     UART_Tx_FSM_state <= TransmitData;
                 end
             end
@@ -187,41 +176,9 @@ module top(
         endcase
     end
 
-    /*
-    always@(posedge clk) begin
-        if(reset) begin
-            FSM_state <= 0;
-            counter <= 0;
-            input_ready <= 0;
-        end else
-        case(FSM_state)
-            4'h0: begin
-                FSM_state <= 4'h1;
-                counter <= 0;
-                input_ready <= 1;
-            end
-            
-            4'h1: begin
-                input_ready <= 0;
-                FSM_state <= 4'h2;
-            end
-            
-            4'h2: begin
-                counter <= counter + 1;
-                if(counter == 7) FSM_state <= 4'h3;
-            end
-            
-            4'h3: begin
-                FSM_state <= 4'h3;
-            end
-        endcase
-    end
-    */
-
     // Include the SCL decoder.
-    SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(n), .l(l), .K(M), .FROZEN_BITS(32'b00000000000101110001011111111111)) 
+    SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(n), .l(l), .K(K), .FROZEN_BITS(32'b00000000000000110000011101111111)) 
                                                                             scl_decoder(.clk(clk), .reset(manual_reset), 
                                                                             .input_ready(input_ready), .output_ready(output_ready), 
                                                                             .decoded_bits(decoded_bits), .LLR(LLR_recv_bitstr));
-    
 endmodule

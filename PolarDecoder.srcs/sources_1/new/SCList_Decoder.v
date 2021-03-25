@@ -174,7 +174,6 @@ module SCList_Decoder
 
     reg [K-1:0] u [L-1:0];
     reg [N_CRC-1:0] CRC_u[L-1:0];           // CRC bits of u. Calculated whenever one info bit is decoded.
-    wire [l-1:0] CRC_zero_selector;
 
     wire [K-1:0] u_next_Bus;
 
@@ -254,7 +253,13 @@ module SCList_Decoder
             assign input_LLRs_formatted[i] = LLR[(i+1)*LLR_WIDTH-1 : i*LLR_WIDTH];
         end
     endgenerate
-    
+
+    wire [PM_WIDTH*L-1:0] fm_input_data;
+    wire [l*L-1:0] fm_input_labels;
+    wire [PM_WIDTH*L-1:0] fm_output_data;
+    wire [l*L-1:0] fm_output_labels;
+    wire [l-1:0] ptr_fm_output_labels[L-1:0];
+
     always@(posedge clk or posedge reset) begin
         if(reset) begin
             state <= INIT;
@@ -436,7 +441,7 @@ module SCList_Decoder
                     Copy_EN <= 0;
                     for(k=0;k<L;k=k+1) begin
                         if(active_path[k]) begin
-                            if(!frozen_bits[phi])
+                            if(!frozen_bits[phi]) begin
                                 u[k][u_iter] = Flag_Path_decision[k];
                                 // Perform CRC check.
                                 if(CRC_u[k][N_CRC-1]) begin
@@ -444,6 +449,7 @@ module SCList_Decoder
                                 end else begin
                                     CRC_u[k] <= {CRC_u[k][N_CRC-2:0], Flag_Path_decision[k]};
                                 end
+                            end
 
                             if(!phi[0]) begin
                                 CL[k][0] = Flag_Path_decision[k];
@@ -466,8 +472,8 @@ module SCList_Decoder
 
                     // Decision complete. Then setup partial-sum return logic.
                     if(phi == N-1) begin
-                        state <= CHECK_CRC;
-                        
+                        state <= WAIT_FIND;
+                        find_min_start <= 1'b1;
                     end else if(phi[0]) begin
                         psr_onehot <= 2;    // initialize the switch as [0 1 0 0 ... ], enabling CL[1] or CR[1] to be accessed.
                         state <= RIGHT;
@@ -523,13 +529,14 @@ module SCList_Decoder
                 end
 
                 CHECK_CRC: begin
-                    for(k=0;k<L;k=k+1) begin
-                        if(CRC_u[k] == 0) begin
-                            decoded_bits = u[k];       // Problems may be HERE.
-                            state = COMPLETE;
-                        end else begin
-                            state = WAIT_FIND;
-                            find_min_start = 1'b1;
+                    if(CRC_u[ptr_fm_output_labels[list_iter_fsm]] == 0) begin
+                        decoded_bits <= u[ptr_fm_output_labels[list_iter_fsm]];
+                        state <= COMPLETE;
+                    end else begin
+                        list_iter_fsm = list_iter_fsm + 1;
+                        if(list_iter_fsm == L) begin
+                            decoded_bits <= u[ptr_fm_output_labels[0]];
+                            state <= COMPLETE;
                         end
                     end
                 end
@@ -537,8 +544,9 @@ module SCList_Decoder
                 WAIT_FIND: begin
                     find_min_start <= 1'b0;
                     if(find_min_complete) begin
-                        decoded_bits <= u[ptr_min_PM];
-                        state <= COMPLETE;
+                        // decoded_bits <= u[CRC_zero_selector];
+                        state <= CHECK_CRC;
+                        list_iter_fsm <= 0;
                     end
                 end
                 
@@ -557,8 +565,7 @@ module SCList_Decoder
     
     // Post-decoding sorting logic.
     // Calling find_min modules when in complete state.
-    wire [PM_WIDTH*L-1:0] fm_input_data;
-    wire [l*L-1:0] fm_input_labels;
+
 
     generate
         for(i=0;i<L;i=i+1) begin: connect_find_min
@@ -567,13 +574,18 @@ module SCList_Decoder
         end
     endgenerate
 
-    find_min #(.DATA_WIDTH(PM_WIDTH), .LABEL_WIDTH(l), .LOG_INPUT_NUM(l)) find_min_inst(.clk(clk), 
-                .input_data(fm_input_data), .input_labels(fm_input_labels), .input_ready(find_min_start), .output_label(ptr_min_PM), .output_ready(find_min_complete));
+    //find_min #(.DATA_WIDTH(PM_WIDTH), .LABEL_WIDTH(l), .LOG_INPUT_NUM(l)) find_min_inst(.clk(clk), 
+    //            .input_data(fm_input_data), .input_labels(fm_input_labels), .input_ready(find_min_start), .output_label(ptr_min_PM), .output_ready(find_min_complete));
     
+    bitonic_sorting_top #(.LOG_INPUT_NUM(l), .DATA_WIDTH(PM_WIDTH), .LABEL_WIDTH(l), .SIGNED(0), .ASCENDING(1)) 
+        bs_findmin(.clk(clk), .rst(reset), .x_valid(find_min_start), 
+    .x(fm_input_data), .x_label(fm_input_labels), .y(fm_output_data), .y_label(fm_output_labels), .y_valid(find_min_complete)); 
+
     // CRC Logic. Need to convert "find_min" into "bitonic_sorting_network", in order to aid the CRC-check logic.
-    always@(*) begin
-        for(k=0;k<L;k=k+1) begin
-            
+    generate
+        for(i=0;i<L;i=i+1) begin
+            assign ptr_fm_output_labels[i] = fm_output_labels[l*(i+1)-1:l*i];
         end
-    end
+    endgenerate
+    
 endmodule
