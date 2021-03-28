@@ -2,7 +2,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Company:     Tsinghua University
 // Engineer:    John Zhu
-// 
+// Instructor:  Linglong Dai
 // Create Date: 2021/02/21 14:17:33
 // Design Name: SCList Polar Decoder
 // Module Name: top
@@ -40,7 +40,8 @@ module top(
     localparam N = 2**n;
     parameter M = 16;
     parameter K_CRC = 4;
-    localparam K = M + K_CRC;       // Total cnt. of non-frozen bits.
+    parameter K_PCC = 2;
+    localparam K = M + K_CRC + K_PCC;           // Total cnt. of non-frozen bits.
 
     parameter l = 3;
     parameter ADDITIONAL_WIDTH = 3;
@@ -48,6 +49,26 @@ module top(
 
     reg [LLR_WIDTH-1:0] LLR_RECV [N-1:0];
     wire [K-1:0] decoded_bits;
+    wire [M-1:0] decoded_info_bits;
+
+    // M assign sentences.
+    assign decoded_info_bits[0] = decoded_bits[0];
+    assign decoded_info_bits[1] = decoded_bits[1];
+    assign decoded_info_bits[2] = decoded_bits[2];
+    assign decoded_info_bits[3] = decoded_bits[3];
+    assign decoded_info_bits[4] = decoded_bits[4];
+    assign decoded_info_bits[5] = decoded_bits[6];
+    assign decoded_info_bits[6] = decoded_bits[7];
+    assign decoded_info_bits[7] = decoded_bits[8];
+    assign decoded_info_bits[8] = decoded_bits[9];
+    assign decoded_info_bits[9] = decoded_bits[11];
+    assign decoded_info_bits[10] = decoded_bits[12];
+    assign decoded_info_bits[11] = decoded_bits[13];
+    assign decoded_info_bits[12] = decoded_bits[14];
+    assign decoded_info_bits[13] = decoded_bits[15];
+    assign decoded_info_bits[14] = decoded_bits[16];
+    assign decoded_info_bits[15] = decoded_bits[17];
+
     assign decoded_bits_disp = decoded_bits[7:0];
 
     wire [N*LLR_WIDTH-1:0] LLR_recv_bitstr;
@@ -69,7 +90,7 @@ module top(
         input_ready <= 0;
     end
 
-    // Engineer:  John Zhu. All rights reserved.
+    // Engineer:  John Zhu.  Instructor: Linglong Dai. All rights reserved.
     /*-------------------RX/TX modules---------------*/
     // One byte transmitted at a time.
     wire Rx_DataValid;
@@ -132,7 +153,7 @@ module top(
         end
     end
 
-    assign D = LLR_RECV[SW];      // Debug Port.
+    assign D = LLR_RECV[SW];                // Debug Port.
 
     reg [3:0] UART_Tx_FSM_state;
     reg [M-1:0] decoded_bits_to_transmit;
@@ -151,7 +172,7 @@ module top(
             INIT: begin
                 TransmitCnt = 0;
                 if(output_ready) begin
-                    decoded_bits_to_transmit <= decoded_bits[M-1:0];       // Save data to be transmitted.
+                    decoded_bits_to_transmit <= decoded_info_bits;
                     UART_Tx_FSM_state <= TransmitData;
                 end
             end
@@ -177,8 +198,8 @@ module top(
     end
 
     // Include the SCL decoder.
-    SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(n), .l(l), .K(K), .FROZEN_BITS(32'b00000000000000110000011101111111)) 
-                                                                            scl_decoder(.clk(clk), .reset(manual_reset), 
+    CA_PC_SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(n), .l(l), .K(K), .FROZEN_BITS(32'b00000000000000010000001101111111)) 
+                                                                            ca_pc_scl_decoder(.clk(clk), .reset(manual_reset), 
                                                                             .input_ready(input_ready), .output_ready(output_ready), 
                                                                             .decoded_bits(decoded_bits), .LLR(LLR_recv_bitstr));
 endmodule

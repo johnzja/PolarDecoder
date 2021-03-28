@@ -5,7 +5,7 @@
 // 
 // Create Date: 2021/03/13 15:37:13
 // Design Name: 
-// Module Name: SCList_Decoder
+// Module Name: CA_PC_SCList_Decoder
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,8 +19,8 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-module SCList_Decoder
-    #(  parameter LLR_WIDTH = 8, parameter n = 3, parameter l = 3, parameter K = 4, parameter FROZEN_BITS=8'b00010111,
+module CA_PC_SCList_Decoder
+    #(  parameter LLR_WIDTH = 8, parameter n = 5, parameter l = 3, parameter K = 22, parameter FROZEN_BITS=8'b00010111,
         parameter CRC_poly = 4'b0011, parameter N_CRC = 4
     )
     (
@@ -36,6 +36,18 @@ module SCList_Decoder
     
     localparam N = 2**n;
     localparam L = 2**l;
+
+    /*----------------Configure Parity-Check------------------*/
+    localparam CntPCEqns = 2;
+
+    localparam integer eqn1 [0:2] = {0, 2, 5};
+    localparam integer eqn2 [0:2] = {1, 6, 10};
+
+    localparam integer eqn_checkbits [0:1] = {eqn1[2], eqn2[2]};
+    
+    localparam integer eqn_xor_vecs [0:1] = {22'b00_0000_0000_0000_0000_0101, 22'b00_0000_0000_0000_0100_0010};
+
+    /*------------End of Parity-Check configuration-----------*/
     
     reg [LLR_WIDTH-1:0] P [L-1:0][N-2:0];
     reg [N-2:0] CL [L-1:0];
@@ -260,6 +272,8 @@ module SCList_Decoder
     wire [l*L-1:0] fm_output_labels;
     wire [l-1:0] ptr_fm_output_labels[L-1:0];
 
+    reg is_PCC_bit;
+
     always@(posedge clk or posedge reset) begin
         if(reset) begin
             state <= INIT;
@@ -284,7 +298,8 @@ module SCList_Decoder
 
                     active_path <= 1;               // Enable only one path at the beginning.
                     N_active_path <= 1;             // At the beginning: There are only 1 active path.
-                    u_iter <= 0;                    
+                    u_iter <= 0;      
+                    is_PCC_bit <= 0;              
 
                     for(k=0;k<L;k=k+1) begin
                         PM[k] <= 0;
@@ -323,13 +338,33 @@ module SCList_Decoder
                 PREP_SORT: begin
                     if(frozen_bits[phi]) begin
                         state <= DECIDE;
+                        Flag_Path_decision <= 0;
+                        is_PCC_bit <= 0;
                     end else begin
-                        // Enable the bitonic sorting network.
-
-                        sort_start <= 1'b1;
-                        N_active_path = N_active_path << 1;        
-                        if(N_active_path > L) N_active_path = L;
-                        state <= WAIT_SORT; 
+                        // Check if this bit is in the parity-check set. Then it is a dynamically-frozen bit!
+                        if(u_iter == eqn_checkbits[0]) begin
+                            // the 1st checking equation.
+                            for(k=0;k<L;k=k+1) begin
+                                Flag_Path_decision[k] <= ^(eqn_xor_vecs[0] & u[k]);
+                            end
+                            state <= DECIDE;
+                            is_PCC_bit <= 1;
+                        end else if (u_iter == eqn_checkbits[1]) begin
+                            // the 2nd checking equation.
+                            for(k=0;k<L;k=k+1) begin
+                                Flag_Path_decision[k] <= ^(eqn_xor_vecs[1] & u[k]);
+                            end
+                            state <= DECIDE;
+                            is_PCC_bit <= 1;
+                        end else begin
+                            // Enable the bitonic sorting network.
+                            is_PCC_bit <= 0;
+                            Flag_Path_decision <= 0;
+                            sort_start <= 1'b1;
+                            N_active_path = N_active_path << 1;        
+                            if(N_active_path > L) N_active_path = L;
+                            state <= WAIT_SORT; 
+                        end
                     end
                     
                     // Setup PM_split_0 and PM_split_1 in parallel, within 1 clock cycle.
@@ -349,7 +384,7 @@ module SCList_Decoder
                             PM_split_1[list_iter] <= -1;    // All-one path metric (MAX), infinity.
                         end
                     end
-                    Flag_Path_decision <= 0;
+                    
                     just_copied <= 0;
                 end
                 
@@ -444,10 +479,13 @@ module SCList_Decoder
                             if(!frozen_bits[phi]) begin
                                 u[k][u_iter] = Flag_Path_decision[k];
                                 // Perform CRC check.
-                                if(CRC_u[k][N_CRC-1]) begin
-                                    CRC_u[k] <= CRC_poly ^ {CRC_u[k][N_CRC-2:0], Flag_Path_decision[k]};
-                                end else begin
-                                    CRC_u[k] <= {CRC_u[k][N_CRC-2:0], Flag_Path_decision[k]};
+
+                                if(!is_PCC_bit) begin
+                                    if(CRC_u[k][N_CRC-1]) begin
+                                        CRC_u[k] <= CRC_poly ^ {CRC_u[k][N_CRC-2:0], Flag_Path_decision[k]};
+                                    end else begin
+                                        CRC_u[k] <= {CRC_u[k][N_CRC-2:0], Flag_Path_decision[k]};
+                                    end
                                 end
                             end
 

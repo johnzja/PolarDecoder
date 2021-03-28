@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="sim_top_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="sim_top" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="6994834fs"></ZoomStartTime>
+      <ZoomEndTime time="7715835fs"></ZoomEndTime>
+      <Cursor1Time time="7565000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="200"></NameColumnWidth>
+      <ValueColumnWidth column_width="110"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="62" />
+   <wvobject fp_name="/sim_top/reset" type="logic">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/input_ready" type="logic">
+      <obj_property name="ElementShortName">input_ready</obj_property>
+      <obj_property name="ObjectShortName">input_ready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/output_ready" type="logic">
+      <obj_property name="ElementShortName">output_ready</obj_property>
+      <obj_property name="ObjectShortName">output_ready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/decoded_bits" type="array">
+      <obj_property name="ElementShortName">decoded_bits[21:0]</obj_property>
+      <obj_property name="ObjectShortName">decoded_bits[21:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/LLR_RECV" type="array">
+      <obj_property name="ElementShortName">LLR_RECV[351:0]</obj_property>
+      <obj_property name="ObjectShortName">LLR_RECV[351:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/FSM_state" type="array">
+      <obj_property name="ElementShortName">FSM_state[3:0]</obj_property>
+      <obj_property name="ObjectShortName">FSM_state[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/counter" type="array">
+      <obj_property name="ElementShortName">counter[2:0]</obj_property>
+      <obj_property name="ObjectShortName">counter[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/LLR_WIDTH" type="array">
+      <obj_property name="ElementShortName">LLR_WIDTH[31:0]</obj_property>
+      <obj_property name="ObjectShortName">LLR_WIDTH[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/P_next_G" type="array">
+      <obj_property name="ElementShortName">P_next_G[7:0][30:0][10:0]</obj_property>
+      <obj_property name="ObjectShortName">P_next_G[7:0][30:0][10:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/P_next_Bus" type="array">
+      <obj_property name="ElementShortName">P_next_Bus[30:0][10:0]</obj_property>
+      <obj_property name="ObjectShortName">P_next_Bus[30:0][10:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/Copy_EN" type="array">
+      <obj_property name="ElementShortName">Copy_EN[7:0]</obj_property>
+      <obj_property name="ObjectShortName">Copy_EN[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/phi" type="array">
+      <obj_property name="ElementShortName">phi[4:0]</obj_property>
+      <obj_property name="ObjectShortName">phi[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/state" type="array">
+      <obj_property name="ElementShortName">state[3:0]</obj_property>
+      <obj_property name="ObjectShortName">state[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/counter" type="array">
+      <obj_property name="ElementShortName">counter[4:0]</obj_property>
+      <obj_property name="ObjectShortName">counter[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/llr_layer" type="array">
+      <obj_property name="ElementShortName">llr_layer[4:0]</obj_property>
+      <obj_property name="ObjectShortName">llr_layer[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/psr_onehot" type="array">
+      <obj_property name="ElementShortName">psr_onehot[4:0]</obj_property>
+      <obj_property name="ObjectShortName">psr_onehot[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/input_LLRs" type="array">
+      <obj_property name="ElementShortName">input_LLRs[31:0][10:0]</obj_property>
+      <obj_property name="ObjectShortName">input_LLRs[31:0][10:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/frozen_bits" type="array">
+      <obj_property name="ElementShortName">frozen_bits[31:0]</obj_property>
+      <obj_property name="ObjectShortName">frozen_bits[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/t" type="logic">
+      <obj_property name="ElementShortName">t</obj_property>
+      <obj_property name="ObjectShortName">t</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/k" type="array">
+      <obj_property name="ElementShortName">k[31:0]</obj_property>
+      <obj_property name="ObjectShortName">k[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/PM" type="array">
+      <obj_property name="ElementShortName">PM[7:0][15:0]</obj_property>
+      <obj_property name="ObjectShortName">PM[7:0][15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/PM_split_0" type="array">
+      <obj_property name="ElementShortName">PM_split_0[7:0][15:0]</obj_property>
+      <obj_property name="ObjectShortName">PM_split_0[7:0][15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/PM_split_1" type="array">
+      <obj_property name="ElementShortName">PM_split_1[7:0][15:0]</obj_property>
+      <obj_property name="ObjectShortName">PM_split_1[7:0][15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/active_path" type="array">
+      <obj_property name="ElementShortName">active_path[7:0]</obj_property>
+      <obj_property name="ObjectShortName">active_path[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/N_active_path" type="array">
+      <obj_property name="ElementShortName">N_active_path[4:0]</obj_property>
+      <obj_property name="ObjectShortName">N_active_path[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/u" type="array">
+      <obj_property name="ElementShortName">u[7:0][21:0]</obj_property>
+      <obj_property name="ObjectShortName">u[7:0][21:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/CRC_u" type="array">
+      <obj_property name="ElementShortName">CRC_u[7:0][3:0]</obj_property>
+      <obj_property name="ObjectShortName">CRC_u[7:0][3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/u_next_Bus" type="array">
+      <obj_property name="ElementShortName">u_next_Bus[21:0]</obj_property>
+      <obj_property name="ObjectShortName">u_next_Bus[21:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/list_iter" type="array">
+      <obj_property name="ElementShortName">list_iter[3:0]</obj_property>
+      <obj_property name="ObjectShortName">list_iter[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/list_iter_fsm" type="array">
+      <obj_property name="ElementShortName">list_iter_fsm[3:0]</obj_property>
+      <obj_property name="ObjectShortName">list_iter_fsm[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/sort_start" type="logic">
+      <obj_property name="ElementShortName">sort_start</obj_property>
+      <obj_property name="ObjectShortName">sort_start</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/sort_complete" type="logic">
+      <obj_property name="ElementShortName">sort_complete</obj_property>
+      <obj_property name="ObjectShortName">sort_complete</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/find_min_start" type="logic">
+      <obj_property name="ElementShortName">find_min_start</obj_property>
+      <obj_property name="ObjectShortName">find_min_start</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/find_min_complete" type="logic">
+      <obj_property name="ElementShortName">find_min_complete</obj_property>
+      <obj_property name="ObjectShortName">find_min_complete</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/x_input" type="array">
+      <obj_property name="ElementShortName">x_input[255:0]</obj_property>
+      <obj_property name="ObjectShortName">x_input[255:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/l_input" type="array">
+      <obj_property name="ElementShortName">l_input[63:0]</obj_property>
+      <obj_property name="ObjectShortName">l_input[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/x_output" type="array">
+      <obj_property name="ElementShortName">x_output[255:0]</obj_property>
+      <obj_property name="ObjectShortName">x_output[255:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/l_output" type="array">
+      <obj_property name="ElementShortName">l_output[63:0]</obj_property>
+      <obj_property name="ObjectShortName">l_output[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/PM_split_sorted" type="array">
+      <obj_property name="ElementShortName">PM_split_sorted[15:0][15:0]</obj_property>
+      <obj_property name="ObjectShortName">PM_split_sorted[15:0][15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/PM_split_sorted_label" type="array">
+      <obj_property name="ElementShortName">PM_split_sorted_label[15:0][3:0]</obj_property>
+      <obj_property name="ObjectShortName">PM_split_sorted_label[15:0][3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/Flag_SC_state" type="array">
+      <obj_property name="ElementShortName">Flag_SC_state[7:0]</obj_property>
+      <obj_property name="ObjectShortName">Flag_SC_state[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/Flag_Killed_state" type="array">
+      <obj_property name="ElementShortName">Flag_Killed_state[7:0]</obj_property>
+      <obj_property name="ObjectShortName">Flag_Killed_state[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/Flag_Killed_state_dual" type="array">
+      <obj_property name="ElementShortName">Flag_Killed_state_dual[7:0]</obj_property>
+      <obj_property name="ObjectShortName">Flag_Killed_state_dual[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/Flag_Path_decision" type="array">
+      <obj_property name="ElementShortName">Flag_Path_decision[7:0]</obj_property>
+      <obj_property name="ObjectShortName">Flag_Path_decision[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/temp" type="array">
+      <obj_property name="ElementShortName">temp[7:0]</obj_property>
+      <obj_property name="ObjectShortName">temp[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/temp_dual" type="array">
+      <obj_property name="ElementShortName">temp_dual[7:0]</obj_property>
+      <obj_property name="ObjectShortName">temp_dual[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/N_Copy_state" type="array">
+      <obj_property name="ElementShortName">N_Copy_state[3:0]</obj_property>
+      <obj_property name="ObjectShortName">N_Copy_state[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/N_Killed_state" type="array">
+      <obj_property name="ElementShortName">N_Killed_state[3:0]</obj_property>
+      <obj_property name="ObjectShortName">N_Killed_state[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/ptr_Copy_state" type="array">
+      <obj_property name="ElementShortName">ptr_Copy_state[7:0][2:0]</obj_property>
+      <obj_property name="ObjectShortName">ptr_Copy_state[7:0][2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/ptr_Killed_state" type="array">
+      <obj_property name="ElementShortName">ptr_Killed_state[7:0][2:0]</obj_property>
+      <obj_property name="ObjectShortName">ptr_Killed_state[7:0][2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/just_copied" type="array">
+      <obj_property name="ElementShortName">just_copied[7:0]</obj_property>
+      <obj_property name="ObjectShortName">just_copied[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/reg_copy_selector" type="array">
+      <obj_property name="ElementShortName">reg_copy_selector[2:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_copy_selector[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/u_iter" type="array">
+      <obj_property name="ElementShortName">u_iter[4:0]</obj_property>
+      <obj_property name="ObjectShortName">u_iter[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/input_LLRs_formatted" type="array">
+      <obj_property name="ElementShortName">input_LLRs_formatted[31:0][10:0]</obj_property>
+      <obj_property name="ObjectShortName">input_LLRs_formatted[31:0][10:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/fm_input_data" type="array">
+      <obj_property name="ElementShortName">fm_input_data[127:0]</obj_property>
+      <obj_property name="ObjectShortName">fm_input_data[127:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/fm_input_labels" type="array">
+      <obj_property name="ElementShortName">fm_input_labels[23:0]</obj_property>
+      <obj_property name="ObjectShortName">fm_input_labels[23:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/fm_output_data" type="array">
+      <obj_property name="ElementShortName">fm_output_data[127:0]</obj_property>
+      <obj_property name="ObjectShortName">fm_output_data[127:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/fm_output_labels" type="array">
+      <obj_property name="ElementShortName">fm_output_labels[23:0]</obj_property>
+      <obj_property name="ObjectShortName">fm_output_labels[23:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/ptr_fm_output_labels" type="array">
+      <obj_property name="ElementShortName">ptr_fm_output_labels[7:0][2:0]</obj_property>
+      <obj_property name="ObjectShortName">ptr_fm_output_labels[7:0][2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim_top/ca_pc_scl_decoder/is_PCC_bit" type="logic">
+      <obj_property name="ElementShortName">is_PCC_bit</obj_property>
+      <obj_property name="ObjectShortName">is_PCC_bit</obj_property>
+   </wvobject>
+</wave_config>
