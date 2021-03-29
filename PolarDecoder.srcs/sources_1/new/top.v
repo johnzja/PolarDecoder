@@ -198,7 +198,7 @@ module top(
     end
 
     // Include the SCL decoder.
-    CA_PC_SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(n), .l(l), .K(K), .FROZEN_BITS(32'b00000000000000010000001101111111)) 
+    CA_PC_SCList_Decoder #(.LLR_WIDTH(LLR_WIDTH), .n(n), .l(l), .K(K), .FROZEN_BITS(32'b0000_0000_0000_0001_0000_0011_0111_1111)) 
                                                                             ca_pc_scl_decoder(.clk(clk), .reset(manual_reset), 
                                                                             .input_ready(input_ready), .output_ready(output_ready), 
                                                                             .decoded_bits(decoded_bits), .LLR(LLR_recv_bitstr));

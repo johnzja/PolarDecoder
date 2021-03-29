@@ -47,6 +47,11 @@ module CA_PC_SCList_Decoder
     
     localparam integer eqn_xor_vecs [0:1] = {22'b00_0000_0000_0000_0000_0101, 22'b00_0000_0000_0000_0100_0010};
 
+    /*------------------Configure SCFlip----------------------*/
+    // Hard-wire the Critical Set into FPGA itself.
+    localparam integer flippables [0:5] = {7, 10, 12, 17, 18, 24};
+    localparam integer N_CS = 6;
+
     /*------------End of Parity-Check configuration-----------*/
     
     reg [LLR_WIDTH-1:0] P [L-1:0][N-2:0];
@@ -154,6 +159,7 @@ module CA_PC_SCList_Decoder
     localparam IDENT_PATH   = 4'hB;
     localparam WAIT_FIND    = 4'hC;
     localparam CHECK_CRC    = 4'hD;
+    localparam RESTART      = 4'hE;
     
     reg [n-1:0] counter = 0;
     reg [n-1:0] llr_layer = 0;
@@ -272,16 +278,20 @@ module CA_PC_SCList_Decoder
     wire [l*L-1:0] fm_output_labels;
     wire [l-1:0] ptr_fm_output_labels[L-1:0];
 
+    // Parity-Check and SCLFlip decoding.
     reg is_PCC_bit;
+    reg bit_flip;
+    reg [n-1:0] index_bit_to_flip;
+    reg [n-1:0] index_CS;
 
+    // Main FSM starts here.
     always@(posedge clk or posedge reset) begin
         if(reset) begin
             state <= INIT;
             decoded_bits <= 0;
-            for(k=0;k<L;k=k+1) u[k] <= 0;   // Initialize u-paths to be zero.
+            for(k=0;k<L;k=k+1) u[k] <= 0;           // Initialize u-paths to be zero.
         end
         else begin
-            // Main FSM logic starts here.
             case(state)
                 INIT: begin
                     output_ready <= 0;
@@ -299,7 +309,10 @@ module CA_PC_SCList_Decoder
                     active_path <= 1;               // Enable only one path at the beginning.
                     N_active_path <= 1;             // At the beginning: There are only 1 active path.
                     u_iter <= 0;      
-                    is_PCC_bit <= 0;              
+                    is_PCC_bit <= 0;    
+                    bit_flip <= 0;
+                    index_bit_to_flip <= 0;          
+                    index_CS <= 0;
 
                     for(k=0;k<L;k=k+1) begin
                         PM[k] <= 0;
@@ -415,7 +428,11 @@ module CA_PC_SCList_Decoder
                         if(Flag_Killed_state[temp]) begin
                             Flag_Killed_state[temp] <= 1'b0;
                             Flag_SC_state[temp]     <= 1'b1;
-                            Flag_Path_decision[temp] <= PM_split_sorted_label[list_iter_fsm][l];    // if a path is in SC state, then the SC hard-decision bit should be saved.
+                            if((!bit_flip) || (index_bit_to_flip != phi)) begin
+                                Flag_Path_decision[temp] <= PM_split_sorted_label[list_iter_fsm][l];    // if a path is in SC state, then the SC hard-decision bit should be saved.
+                            end else begin
+                                Flag_Path_decision[temp] <= !(PM_split_sorted_label[list_iter_fsm][l]);
+                            end
                         end else if(Flag_SC_state[temp]) begin
                             Flag_SC_state[temp]     <= 1'b0;
                             ptr_Copy_state[N_Copy_state] <= temp;               // ptr_Copy_state[i] means the index of the i-th path which needs to be copied.
@@ -573,8 +590,17 @@ module CA_PC_SCList_Decoder
                     end else begin
                         list_iter_fsm = list_iter_fsm + 1;
                         if(list_iter_fsm == L) begin
-                            decoded_bits <= u[ptr_fm_output_labels[0]];
-                            state <= COMPLETE;
+                            // decoded_bits <= u[ptr_fm_output_labels[0]];
+                            // Start flipping.
+                            index_bit_to_flip <= flippables[index_CS];
+                            index_CS = index_CS + 1;
+                            if(index_CS == N_CS) begin
+                                state <= COMPLETE;
+                                decoded_bits <= 0;          // Declare decoding failure. Return all-zeros.
+                            end else begin
+                                state <= RESTART;
+                            end
+                            
                         end
                     end
                 end
@@ -589,9 +615,34 @@ module CA_PC_SCList_Decoder
                 end
                 
                 COMPLETE: begin
-                    // TODO: Find the path with least PM.
                     state <= INIT;
                     output_ready <= 1;
+                end
+
+                RESTART: begin
+                    phi <= 0;
+
+                    P_wr_en <= 0;
+                    P_wr_from_F <= 0;
+                    Copy_EN <= 0;
+
+                    sort_start <= 0;
+                    find_min_start <= 0;
+
+                    frozen_bits <= FROZEN_BITS;
+
+                    active_path <= 1;               // Enable only one path at the beginning.
+                    N_active_path <= 1;             // At the beginning: There are only 1 active path.
+                    u_iter <= 0;      
+                    is_PCC_bit <= 0;    
+                    bit_flip <= 1;                  // Enable bit_flip.       
+
+                    for(k=0;k<L;k=k+1) begin        // Initialize PM and CRC_u registers.
+                        PM[k] <= 0;
+                        CRC_u[k] <= 0;
+                    end
+
+                    state <= CH_F_EXEC;             // Start from executing channel F functions.
                 end
                 
                 default: begin
